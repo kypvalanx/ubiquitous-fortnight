@@ -17,8 +17,10 @@ type Watcher struct {
 	Config      *config.Config
 	Producer    *kafka.Producer
 	discPresent bool
+	ServiceName string
 }
 
+// New emits events on the disc.discovered topic
 func New(
 	cfg *config.Config,
 ) *Watcher {
@@ -28,13 +30,14 @@ func New(
 	)
 
 	return &Watcher{
-		Config:   cfg,
-		Producer: producer,
+		Config:      cfg,
+		Producer:    producer,
+		ServiceName: "Disc Watcher",
 	}
 }
 
 func (w *Watcher) Run(ctx context.Context) error {
-	log.Println("Starting Bluray watcher")
+	log.Printf("[%s Service] Starting...\n", w.ServiceName)
 
 	for {
 		if ctx.Err() != nil {
@@ -46,13 +49,13 @@ func (w *Watcher) Run(ctx context.Context) error {
 
 		switch {
 		case present && !w.discPresent:
-			log.Println("Disc Detected")
+			log.Printf("[%s Service] Disc Detected\n", w.ServiceName)
 			if err := w.EmitDiscDetected(); err != nil {
 				return err
 			}
 
 		case !present && w.discPresent:
-			log.Println("Disc Removed")
+			log.Printf("[%s Service] Disc Removed\n", w.ServiceName)
 
 		}
 
@@ -64,7 +67,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 
 func (w *Watcher) EmitDiscDetected() error {
 
-	event := events.Event{
+	event := events.Event[events.DiscDetected]{
 		ID:            uuid.New().String(),
 		Type:          "DiscDetected",
 		Timestamp:     time.Now(),
