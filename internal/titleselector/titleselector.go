@@ -92,7 +92,7 @@ func (t *TitleSelector) Run(ctx context.Context) error {
 			}
 		}
 
-		var rippableTitles = []models.RippableTitle{}
+		var rippableTitles []models.RippableTitle
 
 		for _, title := range message.Payload.DiscInfo.Titles {
 			if titleRankings[title.ID] == highestRank {

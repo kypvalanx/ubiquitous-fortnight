@@ -81,7 +81,7 @@ func (s *Service) Run(ctx context.Context) error {
 			log.Printf("[%s Service] ripping error: %v", s.ServiceName, err)
 		}
 
-		titles := []models.ConvertableTitle{}
+		var titles []models.ConvertableTitle
 
 		for _, title := range message.Payload.Titles {
 			titles = append(titles, models.ConvertableTitle{
