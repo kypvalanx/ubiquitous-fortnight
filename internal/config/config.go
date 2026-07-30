@@ -5,4 +5,10 @@ type Config struct {
 	Debug        bool
 	DryRun       bool
 	KafkaAddress string
+	TMDBKey      string
+	RedisAddr    string
+	RedisPass    string
+	RedisDB      int
+	RipCache     string
+	ConvertCache string
 }

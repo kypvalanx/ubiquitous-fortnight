@@ -24,6 +24,10 @@ func main() {
 	topics := []string{
 		"disc.discovered",
 		"disc.metadata",
+		"disc.ripped",
+		"disc.rip.progress",
+		"disc.converted",
+		"disc.convert.progress",
 	}
 
 	var wg sync.WaitGroup

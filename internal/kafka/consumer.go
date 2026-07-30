@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/kypvalanx/bluray-ripper/internal/events"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -16,19 +15,18 @@ func (c Consumer) Close() error {
 	return c.reader.Close()
 }
 
-func (c Consumer) ReadMessage(ctx context.Context) (events.Event, error) {
+func (c Consumer) ReadMessage(ctx context.Context, event any) error {
 	message, err := c.reader.ReadMessage(ctx)
 	if err != nil {
-		return events.Event{}, err
+		return err
 	}
 
-	var event events.Event
-	err = json.Unmarshal(message.Value, &event)
+	err = json.Unmarshal(message.Value, event)
 	if err != nil {
-		return events.Event{}, err
+		return err
 	}
 
-	return event, err
+	return err
 }
 
 func NewConsumer(brokers []string, topic string, groupId string) *Consumer {

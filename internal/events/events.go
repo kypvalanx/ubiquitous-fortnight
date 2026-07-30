@@ -2,12 +2,12 @@ package events
 
 import "time"
 
-type Event struct {
+type Event[T any] struct {
 	ID            string `json:"id"`
 	Type          string
 	Timestamp     time.Time
 	CorrelationID string
-	Payload       interface{}
+	Payload       T
 }
 
 type DiscDetected struct {
