@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kypvalanx/bluray-ripper/internal/metadata/tmdb"
 )
 
 type DiscMetadata struct {
@@ -21,16 +23,20 @@ type DiscInfo struct {
 	Drive    string
 	DiscType string
 
-	Metadata DiscMetadata
-
 	Titles []*Title
 }
 
 type Track struct {
-	TitleID int
-	TrackID int
-	Type    string
+	TitleID    int
+	TrackID    int
+	Type       string
+	Resolution string
+	FileName   string
 }
+
+//type VideoTrack struct {
+//	Track
+//}
 
 type Title struct {
 	ID       int
@@ -42,6 +48,7 @@ type Title struct {
 	SubtitleTracks []*Track
 
 	Selected bool
+	FileName string
 }
 
 type RowInfo struct {
@@ -71,12 +78,12 @@ func parseSINFO(s string) (*RowInfo, error) {
 
 	fields := strings.SplitN(s, ",", 5)
 
-	trackId, err := strconv.Atoi(fields[0])
+	titleId, err := strconv.Atoi(fields[0])
 	if err != nil {
 		return nil, err
 	}
 
-	titleId, err := strconv.Atoi(fields[1])
+	trackId, err := strconv.Atoi(fields[1])
 	if err != nil {
 		return nil, err
 	}
@@ -131,4 +138,39 @@ func parseCINFO(s string) (*RowInfo, error) {
 		Code:  code,
 		Value: fields[2],
 	}, nil
+}
+
+type DecoratedData struct {
+	DiscInfo           DiscInfo
+	MovieDetailResults []tmdb.MovieDetailResult
+}
+
+type RipRequest struct {
+	Folder string
+	Titles []RippableTitle
+}
+
+type RippedData struct {
+	Titles []ConvertableTitle
+}
+
+type RippableTitle struct {
+	ID       int
+	Type     string
+	Name     string
+	Filename string
+}
+
+type RipProgress struct {
+	Read   int
+	Write  int
+	Status string
+}
+
+type EncodeProgress struct {
+	Raw string
+}
+
+type ConvertableTitle struct {
+	Filename string
 }
