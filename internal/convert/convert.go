@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kypvalanx/bluray-ripper/internal/commander"
 	"github.com/kypvalanx/bluray-ripper/internal/config"
 	"github.com/kypvalanx/bluray-ripper/internal/events"
 	"github.com/kypvalanx/bluray-ripper/internal/kafka"
@@ -18,9 +18,10 @@ import (
 
 type Service struct {
 	config           *config.Config
-	consumer         *kafka.Consumer
-	producer         *kafka.Producer
-	progressProducer *kafka.Producer
+	consumer         kafka.Consumer
+	producer         kafka.Producer
+	progressProducer kafka.Producer
+	commander        commander.Commander
 	ServiceName      string
 }
 
@@ -39,10 +40,13 @@ func New(cfg *config.Config) *Service {
 		"disc-convert-worker",
 	)
 
+	c := commander.New()
+
 	return &Service{
 		config:           cfg,
 		producer:         producer,
 		consumer:         consumer,
+		commander:        c,
 		progressProducer: progressProducer,
 		ServiceName:      "Convert Disc",
 	}
@@ -51,7 +55,7 @@ func New(cfg *config.Config) *Service {
 func (s Service) Run(ctx context.Context) error {
 	log.Printf("[%s Service] Starting...\n", s.ServiceName)
 
-	defer func(Consumer *kafka.Consumer) {
+	defer func(Consumer kafka.Consumer) {
 		err := Consumer.Close()
 		if err != nil {
 			return
@@ -78,12 +82,12 @@ func (s Service) Run(ctx context.Context) error {
 			log.Printf("[%s Service] conversion error: %v", s.ServiceName, err)
 		}
 
-		event := events.Event[models.RippedData]{
+		event := events.Event[models.ConvertedData]{
 			ID:            uuid.New().String(),
 			Type:          "TracksRipped",
 			Timestamp:     time.Now(),
 			CorrelationID: message.CorrelationID,
-			Payload:       models.RippedData{},
+			Payload:       models.ConvertedData{},
 		}
 
 		err1 := s.producer.Send(ctx, event)
@@ -106,6 +110,12 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 	}
 
 	for _, title := range titles {
+		preset, err := GetPreset(PresetDefault)
+		if err != nil {
+			log.Printf("[%s Service] Preset lookup error: %v", s.ServiceName, err)
+			continue
+		}
+
 		inputFile := filepath.Join(inputDir, title.Filename)
 		outputFile := filepath.Join(outputDir, title.Filename)
 
@@ -114,15 +124,9 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 			"-o", outputFile,
 		}
 
-		preset, err := GetPreset(PresetDefault)
-		if err != nil {
-			log.Printf("[%s Service] Preset lookup error: %v", s.ServiceName, err)
-			continue
-		}
-
 		args = append(args, preset.Args...)
 
-		cmd := exec.CommandContext(
+		cmd := s.commander.CommandContext(
 			ctx,
 			"HandBrakeCLI",
 			args...,
@@ -137,7 +141,7 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 			return err
 		}
 
-		monitorCmd := exec.Command("nvidia-smi", "dmon", "-s", "pucvmet", "-d", "1")
+		monitorCmd := s.commander.Command("nvidia-smi", "dmon", "-s", "pucvmet", "-d", "1")
 
 		monitorStdOut, err := monitorCmd.StdoutPipe()
 		if err != nil {

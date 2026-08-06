@@ -14,4 +14,5 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/redis/go-redis/v9 v9.21.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )

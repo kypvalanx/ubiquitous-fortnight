@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
+	"github.com/kypvalanx/bluray-ripper/internal/arrange"
 	"github.com/kypvalanx/bluray-ripper/internal/cache"
 	"github.com/kypvalanx/bluray-ripper/internal/config"
 	"github.com/kypvalanx/bluray-ripper/internal/convert"
@@ -54,6 +55,7 @@ func main() {
 		RedisDB:      redisdb,
 		RipCache:     getRequiredConfig("RIP_CACHE"),
 		ConvertCache: getOptionalConfig("CONVERT_CACHE"),
+		MediaStorage: getOptionalConfig("MEDIA_STORAGE_CONTEXT"),
 	}
 
 	redisClient := cache.New(cfg)
@@ -76,6 +78,7 @@ func main() {
 		titleselector.New(cfg, redisClient),
 		ripdisc.New(cfg),
 		convert.New(cfg),
+		arrange.New(cfg),
 	}
 
 	for _, s := range services {

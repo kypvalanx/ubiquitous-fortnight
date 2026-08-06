@@ -15,7 +15,7 @@ import (
 
 type Watcher struct {
 	Config      *config.Config
-	Producer    *kafka.Producer
+	Producer    kafka.Producer
 	discPresent bool
 	ServiceName string
 }

@@ -16,8 +16,8 @@ import (
 
 type Service struct {
 	Config      *config.Config
-	Producer    *kafka.Producer
-	Consumer    *kafka.Consumer
+	Producer    kafka.Producer
+	Consumer    kafka.Consumer
 	TMDBClient  *tmdb.Client
 	ServiceName string
 }
@@ -48,7 +48,7 @@ func New(cfg *config.Config, client *redis.Client) *Service {
 func (s Service) Run(ctx context.Context) error {
 	log.Printf("[%s Service] Starting...\n", s.ServiceName)
 
-	defer func(Consumer *kafka.Consumer) {
+	defer func(Consumer kafka.Consumer) {
 		err := Consumer.Close()
 		if err != nil {
 			return

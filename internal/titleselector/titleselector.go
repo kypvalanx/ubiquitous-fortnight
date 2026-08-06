@@ -19,8 +19,8 @@ import (
 
 type TitleSelector struct {
 	Config      *config.Config
-	Producer    *kafka.Producer
-	Consumer    *kafka.Consumer
+	Producer    kafka.Producer
+	Consumer    kafka.Consumer
 	ServiceName string
 	redis       *redis.Client
 }
@@ -48,7 +48,7 @@ func New(cfg *config.Config, redisClient *redis.Client) *TitleSelector {
 func (t *TitleSelector) Run(ctx context.Context) error {
 	log.Printf("[%s Service] Starting...\n", t.ServiceName)
 
-	defer func(Consumer *kafka.Consumer) {
+	defer func(Consumer kafka.Consumer) {
 		err := Consumer.Close()
 		if err != nil {
 			return

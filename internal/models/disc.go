@@ -174,3 +174,6 @@ type EncodeProgress struct {
 type ConvertableTitle struct {
 	Filename string
 }
+
+type ConvertedData struct {
+}

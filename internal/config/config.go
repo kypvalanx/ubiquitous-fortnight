@@ -11,4 +11,5 @@ type Config struct {
 	RedisDB      int
 	RipCache     string
 	ConvertCache string
+	MediaStorage string
 }

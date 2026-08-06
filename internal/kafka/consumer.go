@@ -7,15 +7,19 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Consumer struct {
+type Consumer interface {
+	ReadMessage(ctx context.Context, event any) error
+	Close() error
+}
+type RealConsumer struct {
 	reader *kafka.Reader
 }
 
-func (c Consumer) Close() error {
+func (c RealConsumer) Close() error {
 	return c.reader.Close()
 }
 
-func (c Consumer) ReadMessage(ctx context.Context, event any) error {
+func (c RealConsumer) ReadMessage(ctx context.Context, event any) error {
 	message, err := c.reader.ReadMessage(ctx)
 	if err != nil {
 		return err
@@ -29,8 +33,8 @@ func (c Consumer) ReadMessage(ctx context.Context, event any) error {
 	return err
 }
 
-func NewConsumer(brokers []string, topic string, groupId string) *Consumer {
-	return &Consumer{
+func NewConsumer(brokers []string, topic string, groupId string) Consumer {
+	return &RealConsumer{
 		reader: kafka.NewReader(
 			kafka.ReaderConfig{
 				Brokers: brokers,
