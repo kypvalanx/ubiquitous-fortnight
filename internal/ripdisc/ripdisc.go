@@ -86,6 +86,12 @@ func (s *Service) Run(ctx context.Context) error {
 		for _, title := range message.Payload.Titles {
 			titles = append(titles, models.ConvertableTitle{
 				Filename: title.Filename,
+				Name:     title.Name,
+				Year:     title.Year,
+				MetaTags: title.MetaTage,
+				Type:     title.Type,
+				Season:   title.Season,
+				Episode:  title.Episode,
 			})
 		}
 

@@ -159,6 +159,10 @@ type RippableTitle struct {
 	Type     string
 	Name     string
 	Filename string
+	Year     string
+	MetaTage []string
+	Season   int
+	Episode  int
 }
 
 type RipProgress struct {
