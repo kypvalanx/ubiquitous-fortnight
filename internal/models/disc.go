@@ -173,6 +173,12 @@ type EncodeProgress struct {
 
 type ConvertableTitle struct {
 	Filename string
+	Name     string
+	Year     string
+	MetaTags []string
+	Type     string
+	Season   int
+	Episode  int
 }
 
 type ConvertedData struct {

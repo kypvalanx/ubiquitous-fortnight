@@ -99,7 +99,7 @@ func (s Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableTitle, correlationID string) error {
+func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableTitle, correlationID string) ([]models.ConvertedTitle, error) {
 	outputDir := fmt.Sprintf(s.config.ConvertCache, correlationID)
 	inputDir := fmt.Sprintf(s.config.RipCache, correlationID)
 
@@ -107,8 +107,10 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 	log.Printf("[%s Service] Creating directory: %s", s.ServiceName, outputDir)
 
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("creating %s: %w", outputDir, err)
+		return nil, fmt.Errorf("creating %s: %w", outputDir, err)
 	}
+
+	var convertedTitles []models.ConvertedTitle
 
 	for _, title := range titles {
 		preset, err := GetPreset(PresetDefault)
@@ -134,23 +136,23 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 		)
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		monitorCmd := s.commander.Command("nvidia-smi", "dmon", "-s", "pucvmet", "-d", "1")
 
 		monitorStdOut, err := monitorCmd.StdoutPipe()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		monitorErrOut, err := monitorCmd.StderrPipe()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		monitorStdOutCh := events.StreamOutput(monitorStdOut)
@@ -160,7 +162,7 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 		stderrCh := events.StreamOutput(stderr)
 
 		if err := cmd.Start(); err != nil {
-			return err
+			return nil, err
 		}
 
 		stdoutOpen := true
@@ -220,13 +222,28 @@ func (s Service) ConvertTitles(ctx context.Context, titles []models.ConvertableT
 		}
 
 		if err := cmd.Wait(); err != nil {
-			return err
+			return nil, err
 		}
+		fi, err := os.Stat(outputFile)
+		if err != nil {
+			return nil, err
+		}
+		// get the size
+		size := fi.Size()
 
-		return nil
+		convertedTitles = append(convertedTitles, models.ConvertedTitle{
+			TempFile:    outputFile,
+			Name:        title.Name,
+			Year:        title.Year,
+			MetaTags:    title.MetaTags,
+			Type:        title.Type,
+			SizeInBytes: uint64(size),
+			Season:      title.Season,
+			Episode:     title.Episode,
+		})
 	}
 
-	return nil
+	return convertedTitles, nil
 }
 
 func (s Service) handleHandbrakeLine(ctx context.Context, line string, correlationID string) {
