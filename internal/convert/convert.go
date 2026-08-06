@@ -14,6 +14,7 @@ import (
 	"github.com/kypvalanx/bluray-ripper/internal/events"
 	"github.com/kypvalanx/bluray-ripper/internal/kafka"
 	"github.com/kypvalanx/bluray-ripper/internal/models"
+	"github.com/kypvalanx/bluray-ripper/internal/service"
 )
 
 type Service struct {
@@ -25,7 +26,7 @@ type Service struct {
 	ServiceName      string
 }
 
-func New(cfg *config.Config) *Service {
+func New(cfg *config.Config) service.Service {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
 		"disc.converted",

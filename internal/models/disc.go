@@ -176,4 +176,19 @@ type ConvertableTitle struct {
 }
 
 type ConvertedData struct {
+	ConvertedTitles []ConvertedTitle
+}
+
+type ConvertedTitle struct {
+	Name        string
+	Year        string
+	MetaTags    []string
+	Season      int
+	Type        string
+	SizeInBytes uint64
+	TempFile    string
+	Episode     int
+}
+
+type ArrangedData struct {
 }
