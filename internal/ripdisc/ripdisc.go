@@ -30,15 +30,15 @@ type Service struct {
 func New(cfg *config.Config) *Service {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.ripped",
+		kafka.DiscRipped,
 	)
 	progressProducer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.rip.progress",
+		kafka.DiscRipProgress,
 	)
 	consumer := kafka.NewConsumer(
 		[]string{cfg.KafkaAddress},
-		"disc.titles.selected",
+		kafka.DiscTitlesSelected,
 		"disc-rip-worker",
 	)
 
@@ -88,7 +88,7 @@ func (s *Service) Run(ctx context.Context) error {
 				Filename: title.Filename,
 				Name:     title.Name,
 				Year:     title.Year,
-				MetaTags: title.MetaTage,
+				MetaTags: title.MetaTags,
 				Type:     title.Type,
 				Season:   title.Season,
 				Episode:  title.Episode,

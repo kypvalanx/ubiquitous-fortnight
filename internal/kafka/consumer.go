@@ -33,12 +33,12 @@ func (c RealConsumer) ReadMessage(ctx context.Context, event any) error {
 	return err
 }
 
-func NewConsumer(brokers []string, topic string, groupId string) Consumer {
+func NewConsumer(brokers []string, topic TopicType, groupId string) Consumer {
 	return &RealConsumer{
 		reader: kafka.NewReader(
 			kafka.ReaderConfig{
 				Brokers: brokers,
-				Topic:   topic,
+				Topic:   topic.Name,
 				GroupID: groupId,
 			},
 		),

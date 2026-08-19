@@ -3,6 +3,8 @@ package metadata
 import (
 	"context"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,12 +27,12 @@ type Service struct {
 func New(cfg *config.Config, client *redis.Client) *Service {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.metadata",
+		kafka.DiscMetadata,
 	)
 
 	consumer := kafka.NewConsumer(
 		[]string{cfg.KafkaAddress},
-		"disc.discdata",
+		kafka.DiscData,
 		"metadata-worker",
 	)
 
@@ -71,6 +73,8 @@ func (s Service) Run(ctx context.Context) error {
 
 		discInfo := message.Payload
 
+		candidates, _ := s.GetMetadataCandidates(&discInfo)
+
 		response, err := s.TMDBClient.SearchMovieDetails(ctx, discInfo.Label, 0)
 		if err != nil {
 			log.Printf("[Metadata Service] TMDB error: %v", err)
@@ -85,7 +89,8 @@ func (s Service) Run(ctx context.Context) error {
 			CorrelationID: message.CorrelationID,
 			Payload: models.DecoratedData{
 				DiscInfo:           discInfo,
-				MovieDetailResults: response,
+				MovieDetailResults: response, //TODO REMOVE
+				Candidates:         candidates,
 			},
 		}
 
@@ -95,4 +100,63 @@ func (s Service) Run(ctx context.Context) error {
 			log.Printf("[Metadata Service] Kafka error: %v", err1)
 		}
 	}
+}
+
+func (s Service) GetMetadataCandidates(info *models.DiscInfo) ([]models.MetadataCandidate, error) {
+	cleanQuery := CleanQuery(info.Label)
+
+	movieDetails, err := s.TMDBClient.SearchMovieDetails(context.Background(), cleanQuery, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var candidates []models.MetadataCandidate
+	for _, movieDetails := range movieDetails {
+		//fmt.Println(movieDetails)
+		candidates = append(candidates, models.MetadataCandidate{
+			Name:             movieDetails.MovieResult.Title,
+			Type:             "Movies",
+			ID:               movieDetails.MovieDetails.ID,
+			Runtime:          movieDetails.MovieDetails.Runtime,
+			OriginalLanguage: movieDetails.MovieDetails.OriginalLanguage,
+		})
+	}
+
+	tvDetails, err := s.TMDBClient.SearchTVDetails(context.Background(), cleanQuery, 0)
+
+	for _, show := range tvDetails {
+		for _, season := range show.SeasonDetails {
+			for _, episode := range season.Episodes {
+				candidates = append(candidates, models.MetadataCandidate{
+					Name:             show.TVResult.Name,
+					Type:             "Shows",
+					ID:               show.TVResult.ID,
+					Runtime:          episode.Runtime,
+					EpisodeID:        episode.Id,
+					EpisodeNumber:    episode.EpisodeNumber,
+					SeasonNumber:     episode.SeasonNumber,
+					EpisodeTitle:     episode.Name,
+					EpisodeType:      episode.EpisodeType,
+					OriginalLanguage: show.TVResult.OriginalLanguage,
+				})
+			}
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return candidates, nil
+}
+
+var discSuffixRegex = regexp.MustCompile(`[\s\(\[\-_]*(disc)[\s\-_]*\d+[\)\]]*\s*$`)
+var seasonRegex = regexp.MustCompile(`(?i)\bseason[\s\-_]*\d+\b`)
+
+func CleanQuery(label string) string {
+	label = strings.ToLower(label)
+	label = strings.Replace(label, "_", " ", -1)
+	label = discSuffixRegex.ReplaceAllString(label, "")
+	label = seasonRegex.ReplaceAllString(label, "")
+	return label
 }

@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
+	ambiguousStorage "github.com/kypvalanx/bluray-ripper/internal/ambiguous-storage"
 	"github.com/kypvalanx/bluray-ripper/internal/arrange"
 	"github.com/kypvalanx/bluray-ripper/internal/cache"
 	"github.com/kypvalanx/bluray-ripper/internal/config"
@@ -38,24 +39,26 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	redisdb, err := strconv.Atoi(getRequiredConfig("REDIS_DB"))
+	redisdb, err := strconv.Atoi(GetRequiredConfig("REDIS_DB"))
 
 	if err != nil {
 		log.Fatalf("failed to parse REDIS_DB: %v", err)
 	}
 
 	cfg := &config.Config{
-		OpticalDrive: "/dev/sr0",
-		Debug:        true,
-		DryRun:       true,
-		KafkaAddress: getRequiredConfig("KAFKA_BROKERS"),
-		TMDBKey:      getRequiredConfig("TMDB_API_KEY"),
-		RedisAddr:    getRequiredConfig("REDIS_ADDR"),
-		RedisPass:    getOptionalConfig("REDIS_PASSWORD"),
-		RedisDB:      redisdb,
-		RipCache:     getRequiredConfig("RIP_CACHE"),
-		ConvertCache: getOptionalConfig("CONVERT_CACHE"),
-		MediaStorage: getOptionalConfig("MEDIA_STORAGE_CONTEXT"),
+		OpticalDrive:    "/dev/sr0",
+		Debug:           true,
+		DryRun:          true,
+		KafkaAddress:    GetRequiredConfig("KAFKA_BROKERS"),
+		TMDBKey:         GetRequiredConfig("TMDB_API_KEY"),
+		RedisAddr:       GetRequiredConfig("REDIS_ADDR"),
+		RedisPass:       GetOptionalConfig("REDIS_PASSWORD"),
+		RedisDB:         redisdb,
+		RipCache:        GetRequiredConfig("RIP_CACHE"),
+		ConvertCache:    GetOptionalConfig("CONVERT_CACHE"),
+		MediaStorage:    GetOptionalConfig("MEDIA_STORAGE_CONTEXT"),
+		MongoDbUri:      GetOptionalConfig("MONGO_DB_URI"),
+		MongoDbDatabase: GetOptionalConfig("MONGO_DB_DATABASE"),
 	}
 
 	redisClient := cache.New(cfg)
@@ -79,6 +82,7 @@ func main() {
 		ripdisc.New(cfg),
 		convert.New(cfg),
 		arrange.New(cfg),
+		ambiguousStorage.New(cfg),
 	}
 
 	for _, s := range services {
@@ -94,7 +98,7 @@ func main() {
 	wg.Wait()
 }
 
-func getRequiredConfig(key string) string {
+func GetRequiredConfig(key string) string {
 	value := os.Getenv(key)
 
 	if value == "" {
@@ -102,7 +106,7 @@ func getRequiredConfig(key string) string {
 	}
 	return value
 }
-func getOptionalConfig(key string) string {
+func GetOptionalConfig(key string) string {
 	value := os.Getenv(key)
 
 	return value

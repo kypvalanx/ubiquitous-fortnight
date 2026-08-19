@@ -29,15 +29,15 @@ type Service struct {
 func New(cfg *config.Config) service.Service {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.converted",
+		kafka.DiscConverted,
 	)
 	progressProducer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.convert.progress",
+		kafka.DiscConvertProgress,
 	)
 	consumer := kafka.NewConsumer(
 		[]string{cfg.KafkaAddress},
-		"disc.ripped",
+		kafka.DiscRipped,
 		"disc-convert-worker",
 	)
 
@@ -77,7 +77,7 @@ func (s Service) Run(ctx context.Context) error {
 		}
 		log.Printf("[%s Service] Kafka message: %v", s.ServiceName, message)
 
-		err = s.ConvertTitles(ctx, message.Payload.Titles, message.CorrelationID)
+		_, err = s.ConvertTitles(ctx, message.Payload.Titles, message.CorrelationID)
 
 		if err != nil {
 			log.Printf("[%s Service] conversion error: %v", s.ServiceName, err)

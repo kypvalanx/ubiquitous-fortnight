@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 
+	kafka2 "github.com/kypvalanx/bluray-ripper/internal/kafka"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -21,21 +22,12 @@ func main() {
 
 	defer stop()
 
-	topics := []string{
-		"disc.discovered",
-		"disc.metadata",
-		"disc.ripped",
-		"disc.rip.progress",
-		"disc.converted",
-		"disc.convert.progress",
-	}
-
 	var wg sync.WaitGroup
 
-	for _, topic := range topics {
+	for _, topic := range kafka2.Topics {
 		wg.Add(1)
 
-		go func(topic string) {
+		go func(topic kafka2.TopicType) {
 			defer wg.Done()
 			consumeTopic(ctx, topic)
 		}(topic)
@@ -50,11 +42,11 @@ func main() {
 	log.Println("Shutdown Complete.")
 }
 
-func consumeTopic(ctx context.Context, topic string) {
+func consumeTopic(ctx context.Context, topic kafka2.TopicType) {
 	fmt.Println("topic start")
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{"localhost:9092"},
-		Topic:   topic,
+		Topic:   string(topic),
 		GroupID: "event-debugger",
 	})
 

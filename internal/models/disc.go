@@ -49,6 +49,7 @@ type Title struct {
 
 	Selected bool
 	FileName string
+	Playlist bool
 }
 
 type RowInfo struct {
@@ -143,6 +144,7 @@ func parseCINFO(s string) (*RowInfo, error) {
 type DecoratedData struct {
 	DiscInfo           DiscInfo
 	MovieDetailResults []tmdb.MovieDetailResult
+	Candidates         []MetadataCandidate
 }
 
 type RipRequest struct {
@@ -160,7 +162,7 @@ type RippableTitle struct {
 	Name     string
 	Filename string
 	Year     string
-	MetaTage []string
+	MetaTags []string
 	Season   int
 	Episode  int
 }
@@ -169,6 +171,11 @@ type RipProgress struct {
 	Read   int
 	Write  int
 	Status string
+}
+
+type AmbiguousTitle struct {
+	TitleID    int
+	Candidates []MetadataMatch
 }
 
 type EncodeProgress struct {
@@ -201,4 +208,29 @@ type ConvertedTitle struct {
 }
 
 type ArrangedData struct {
+}
+
+type MetadataCandidate struct {
+	Name             string
+	Type             string
+	ID               int
+	Runtime          int
+	EpisodeNumber    int
+	SeasonNumber     int
+	EpisodeTitle     string
+	EpisodeType      string
+	OriginalLanguage string
+	EpisodeID        int
+}
+
+type MetadataMatch struct {
+	TitleID    int
+	MetadataID string
+	Score      int
+}
+
+type MetadataMatchContext struct {
+	LargestResolution string
+	Season            int
+	Name              string
 }

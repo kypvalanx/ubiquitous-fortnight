@@ -26,7 +26,7 @@ func New(
 ) *Watcher {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.discovered",
+		kafka.DiscDiscovered,
 	)
 
 	return &Watcher{

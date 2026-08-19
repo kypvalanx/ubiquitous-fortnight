@@ -29,13 +29,13 @@ type Service struct {
 func New(cfg *config.Config) *Service {
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.discdata",
+		kafka.DiscData,
 	)
 
 	const groupId = "discdata-worker"
 	consumer := kafka.NewConsumer(
 		[]string{cfg.KafkaAddress},
-		"disc.discovered",
+		kafka.DiscDiscovered,
 		groupId,
 	)
 
@@ -155,6 +155,8 @@ func ParseMakeMKVOutput(o string) (*models.DiscInfo, error) {
 
 				case 27:
 					title.FileName = value
+				case 16:
+					title.Playlist = strings.HasSuffix(value, ".mpls")
 				}
 			case "SINFO":
 				track := getOrCreateTrack(trackMap, info.TitleID, info.TrackID)

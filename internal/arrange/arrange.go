@@ -193,15 +193,15 @@ func New(cfg *config.Config) service.Service {
 
 	producer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.converted",
+		kafka.DiscConverted,
 	)
 	progressProducer := kafka.NewProducer(
 		cfg.KafkaAddress,
-		"disc.convert.progress",
+		kafka.DiscConvertProgress,
 	)
 	consumer := kafka.NewConsumer(
 		[]string{cfg.KafkaAddress},
-		"disc.converted",
+		kafka.DiscConverted,
 		"disc-arrange-worker",
 	)
 

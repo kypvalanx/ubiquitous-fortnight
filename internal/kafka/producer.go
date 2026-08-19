@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -16,11 +17,11 @@ type RealProducer struct {
 	writer *kafka.Writer
 }
 
-func NewProducer(address string, topic string) Producer {
+func NewProducer(address string, topic TopicType) Producer {
 	return &RealProducer{
 		writer: &kafka.Writer{
 			Addr:  kafka.TCP(address),
-			Topic: topic,
+			Topic: topic.Name,
 		},
 	}
 }
@@ -32,12 +33,18 @@ func (p *RealProducer) Send(ctx context.Context, message any) error {
 		return err
 	}
 
-	return p.writer.WriteMessages(
+	err = p.writer.WriteMessages(
 		ctx,
 		kafka.Message{
 			Value: data,
 		},
 	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return err
 }
 
 type MockProducer struct{}
