@@ -51,12 +51,7 @@ func New(cfg *config.Config, redisClient *redis.Client) *TitleSelector {
 func (t *TitleSelector) Run(ctx context.Context) error {
 	log.Printf("[%s Service] Starting...\n", t.ServiceName)
 
-	defer func(Consumer kafka.Consumer) {
-		err := Consumer.Close()
-		if err != nil {
-			return
-		}
-	}(t.Consumer)
+	defer t.Consumer.QuietClose()
 
 	for {
 		message := events.Event[models.DecoratedData]{}
@@ -77,18 +72,26 @@ func (t *TitleSelector) Run(ctx context.Context) error {
 		rippableTitles, ambiguousTitles, err := t.ResolveMatches(rankedTitles)
 
 		fmt.Println(rippableTitles, ambiguousTitles, err)
-		t.sendRipRequest(ctx, message)
+		//
+		//
+		//t.send
+		t.sendRipRequest(ctx, message.CorrelationID, rippableTitles)
 	}
 }
 
-func (t *TitleSelector) sendRipRequest(ctx context.Context, message events.Event[models.DecoratedData]) {
+func (t *TitleSelector) sendRipRequest(ctx context.Context, id string, message []models.MetadataMatch) {
+	if len(message) == 0 {
+		return
+	}
+
 	event := events.Event[models.RipRequest]{
 		ID:            uuid.New().String(),
 		Type:          "TitlesRanked",
 		Timestamp:     time.Now(),
-		CorrelationID: message.CorrelationID,
+		CorrelationID: id,
 		Payload: models.RipRequest{
-			Folder: message.CorrelationID,
+			Folder:  id,
+			Matches: message,
 		},
 	}
 

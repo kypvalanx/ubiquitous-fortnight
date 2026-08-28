@@ -148,8 +148,8 @@ type DecoratedData struct {
 }
 
 type RipRequest struct {
-	Folder string
-	Titles []RippableTitle
+	Folder  string
+	Matches []MetadataMatch
 }
 
 type RippedData struct {

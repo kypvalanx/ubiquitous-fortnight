@@ -41,7 +41,7 @@ func (p *RealProducer) Send(ctx context.Context, message any) error {
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(p.writer.Topic, err)
 	}
 
 	return err

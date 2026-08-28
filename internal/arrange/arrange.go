@@ -210,5 +210,6 @@ func New(cfg *config.Config) service.Service {
 		producer:         producer,
 		consumer:         consumer,
 		progressProducer: progressProducer,
+		ServiceName:      "File Arranger",
 	}
 }

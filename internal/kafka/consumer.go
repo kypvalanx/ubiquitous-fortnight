@@ -10,9 +10,17 @@ import (
 type Consumer interface {
 	ReadMessage(ctx context.Context, event any) error
 	Close() error
+	QuietClose()
 }
 type RealConsumer struct {
 	reader *kafka.Reader
+}
+
+func (c RealConsumer) QuietClose() {
+	err := c.Close()
+	if err != nil {
+		return
+	}
 }
 
 func (c RealConsumer) Close() error {
